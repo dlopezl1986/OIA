@@ -549,11 +549,18 @@ function ConnectionCard({ c, api, onChange }: { c: Connection; api: Api; onChang
 function SettingsView({ settings, participants, onSave }: { settings: Settings; participants: Participant[]; onSave: (s: Settings) => Promise<void> }) {
   const [s, setS] = useState(settings);
   const [saved, setSaved] = useState(false);
-  useEffect(() => setS(settings), [settings]);
+  // El valor más reciente vive también en una ref: un envío inmediatamente después de escribir
+  // no debe usar el estado de la renderización anterior.
+  const latest = useRef(settings);
+  const update = (fn: (prev: Settings) => Settings) => {
+    latest.current = fn(latest.current);
+    setS(latest.current);
+  };
+  useEffect(() => update(() => settings), [settings]);
   const num = (k: 'maxRounds' | 'maxParticipants' | 'maxCalls', label: string, min: number, max: number, help: string) => (
     <label class="field">
       <span>{label}</span>
-      <input type="number" min={min} max={max} value={s[k]} onInput={(e) => setS({ ...s, [k]: Number((e.target as HTMLInputElement).value) })} />
+      <input type="number" min={min} max={max} value={s[k]} onInput={(e) => update((p) => ({ ...p, [k]: Number((e.target as HTMLInputElement).value) }))} />
       <span class="small muted">{help}</span>
     </label>
   );
@@ -564,7 +571,7 @@ function SettingsView({ settings, participants, onSave }: { settings: Settings; 
         class="card"
         onSubmit={async (e) => {
           e.preventDefault();
-          await onSave(s);
+          await onSave(latest.current);
           setSaved(true);
           setTimeout(() => setSaved(false), 2000);
         }}
@@ -575,11 +582,11 @@ function SettingsView({ settings, participants, onSave }: { settings: Settings; 
         {num('maxCalls', 'Llamadas máximas por consulta', 1, 16, 'Incluye árbitro, revisiones y reintentos.')}
         <label class="field">
           <span>Tiempo máximo por llamada (s)</span>
-          <input type="number" min={5} max={120} value={s.timeoutMs / 1000} onInput={(e) => setS({ ...s, timeoutMs: Number((e.target as HTMLInputElement).value) * 1000 })} />
+          <input type="number" min={5} max={120} value={s.timeoutMs / 1000} onInput={(e) => update((p) => ({ ...p, timeoutMs: Number((e.target as HTMLInputElement).value) * 1000 }))} />
         </label>
         <label class="field">
           <span>IA árbitro</span>
-          <select value={s.arbiter ?? ''} onChange={(e) => setS({ ...s, arbiter: (e.target as HTMLSelectElement).value || undefined })}>
+          <select value={s.arbiter ?? ''} onChange={(e) => update((p) => ({ ...p, arbiter: (e.target as HTMLSelectElement).value || undefined }))}>
             <option value="">Automático (mejor disponible)</option>
             {participants.map((p) => (
               <option key={p.id} value={p.id}>
@@ -598,7 +605,7 @@ function SettingsView({ settings, participants, onSave }: { settings: Settings; 
                 checked={!s.disabled.includes(p.id)}
                 onChange={(e) => {
                   const on = (e.target as HTMLInputElement).checked;
-                  setS({ ...s, disabled: on ? s.disabled.filter((d) => d !== p.id) : [...s.disabled, p.id] });
+                  update((prev) => ({ ...prev, disabled: on ? prev.disabled.filter((d) => d !== p.id) : [...prev.disabled, p.id] }));
                 }}
               />
               {p.label}
@@ -609,17 +616,19 @@ function SettingsView({ settings, participants, onSave }: { settings: Settings; 
               placeholder={p.defaultModel}
               onInput={(e) => {
                 const v = (e.target as HTMLInputElement).value.trim();
-                const models = { ...s.models };
-                if (v) models[p.id] = v;
-                else delete models[p.id];
-                setS({ ...s, models });
+                update((prev) => {
+                  const models = { ...prev.models };
+                  if (v) models[p.id] = v;
+                  else delete models[p.id];
+                  return { ...prev, models };
+                });
               }}
             />
           </div>
         ))}
         <div class="row">
           <button class="primary">Guardar ajustes</button>
-          <button type="button" class="link" onClick={() => setS(DEFAULT_SETTINGS)}>
+          <button type="button" class="link" onClick={() => update(() => DEFAULT_SETTINGS)}>
             Valores por defecto
           </button>
           {saved && <span class="good-text small">Guardado</span>}
