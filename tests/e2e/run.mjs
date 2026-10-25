@@ -167,6 +167,8 @@ try {
     await page.getByLabel('Rondas de revisión máximas').fill('3');
     await page.getByRole('button', { name: 'Guardar ajustes' }).click();
     await page.getByText('Guardado').waitFor();
+    const afterSave = await page.evaluate(() => ({ stored: localStorage.getItem('oia.dev.settings'), value: document.querySelector('input[type=number]')?.value }));
+    assert(afterSave.stored?.includes('"maxRounds":3'), `no se guardó ${JSON.stringify(afterSave)}`);
     await page.reload();
     await page.getByRole('button', { name: 'Ajustes' }).click();
     // Los ajustes se cargan de forma asíncrona tras iniciar sesión: se espera al valor guardado.
