@@ -1,13 +1,13 @@
 # Arquitectura técnica
 
 ```
-Navegador (PWA, Preact)                          Servidor (Cloudflare Worker o Node)            Proveedores
+Navegador (PWA, Preact)                          Servidor (Cloud Functions, Worker o Node)      Proveedores
 ┌────────────────────────┐   ID token Firebase  ┌──────────────────────────────────┐  HTTPS  ┌──────────────┐
 │ Consulta · Historial   │ ───────────────────▶ │ app.ts: auth, CORS, límites      │ ──────▶ │ Gemini       │
 │ Conexiones · Ajustes   │ ◀─────────────────── │ orchestrator/: clasifica, elige, │         │ GitHub Models│
 └──────────┬─────────────┘   resultado JSON     │   consulta, árbitro, revisión    │         │ Perplexity…  │
            │ reglas: solo el propietario        │ providers/: un adaptador por API │         └──────────────┘
-           ▼                                    │ store/: claves cifradas (KV)     │
+           ▼                                    │ store/: claves cifradas          │
      Firestore (historial, ajustes)             └──────────────────────────────────┘
 ```
 
@@ -24,7 +24,7 @@ Navegador (PWA, Preact)                          Servidor (Cloudflare Worker o N
 | `server/security/` | Verificación de tokens de Firebase (`jose`), cifrado AES-256-GCM, limitador |
 | `server/store/credentials.ts` | Claves cifradas por usuario y conexión sobre un almacén clave-valor |
 | `server/app.ts` | API HTTP independiente de la plataforma (Request/Response estándar) |
-| `server/entries/` | `worker.ts` (Cloudflare), `node.ts` (local), `config.ts` (variables de entorno) |
+| `server/entries/` | `functions.ts` (Firebase Cloud Functions, claves en Firestore `oia_secrets`), `worker.ts` (Cloudflare, claves en KV), `node.ts` (local, archivo cifrado), `config.ts` (variables de entorno) |
 | `web/src/` | Interfaz: `app.tsx`, `platform.ts` (Firebase o modo local), `api.ts`, `markdown.ts` (saneado) |
 
 Añadir un proveedor: crear su adaptador (o reutilizar `openaiCompatible`), declarar la conexión y sus participantes en `registry.ts`. El núcleo no cambia.
@@ -41,7 +41,7 @@ Añadir un proveedor: crear su adaptador (o reutilizar `openaiCompatible`), decl
 
 ## Seguridad
 
-- Las claves de proveedores solo existen en el servidor: cifradas con AES-256-GCM (clave maestra en secreto del Worker) y ligadas a usuario y conexión. Nunca se devuelven ni se registran; los errores de proveedores se redactan.
+- Las claves de proveedores solo existen en el servidor: cifradas con AES-256-GCM (clave maestra en Secret Manager o en secreto del Worker) y ligadas a usuario y conexión. Nunca se devuelven ni se registran; los errores de proveedores se redactan.
 - Acceso: ID token de Firebase verificado (firma, emisor, audiencia, caducidad) + lista de correos verificados o UIDs permitidos. Firestore aplica la misma restricción en sus reglas.
 - CORS limitado a los orígenes de la app; límite de 8 consultas/min y 2 simultáneas por usuario; cuerpo máximo 32 KB; consulta máxima 8.000 caracteres; ajustes saneados en el servidor.
 - Proveedores de pago o con crédito: bloqueados salvo autorización expresa guardada en el servidor.

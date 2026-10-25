@@ -3,7 +3,7 @@ import tseslint from 'typescript-eslint';
 import globals from 'globals';
 
 export default tseslint.config(
-  { ignores: ['dist', 'dist-server', 'dist-e2e', 'node_modules', '.wrangler', 'test-results'] },
+  { ignores: ['dist', 'dist-server', 'dist-e2e', 'functions/lib', 'functions/node_modules', 'node_modules', '.wrangler', 'test-results'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

@@ -3,21 +3,25 @@
 ## Requisitos
 
 - Node.js 22 o superior y Git.
-- Proyecto de Firebase en plan **Spark** (gratuito) con una app web registrada y Firestore creado (Firestore › Crear base de datos, modo producción).
-- Cuenta gratuita de Cloudflare (sin tarjeta) para el servidor.
+- Proyecto de Firebase con una app web registrada y Firestore creado (Firestore › Crear base de datos, modo producción).
+- Opción por defecto (todo en Firebase): plan **Blaze** activado por ti, porque Cloud Functions lo exige. Con uso personal debería quedar dentro de la cuota gratuita; pon una alerta de presupuesto (p. ej. 1 €) en Google Cloud › Facturación › Presupuestos.
+- Opción sin tarjeta: plan Spark + cuenta gratuita de Cloudflare para el servidor (`npm run deploy:cloudflare`).
 
 ## Publicar (una vez)
 
 ```bash
 npm ci
 npm run setup    # pide ID del proyecto y tu correo; genera .env, clave maestra y reglas
-npm run deploy   # inicia sesión en Firebase y Cloudflare (navegador), publica API, web y reglas
+npm run deploy   # inicia sesión en Firebase (navegador), publica función, web y reglas
+# o bien: npm run deploy:cloudflare   (servidor en Cloudflare Workers, sin Blaze)
 ```
+
+Con Firebase, la función `api` corre en `europe-west1` con máximo 2 instancias y 256 MiB; la web llama a `/api` en su mismo dominio. La clave maestra va a Secret Manager (1 secreto, dentro de la cuota gratuita) y las claves cifradas de los proveedores a la colección `oia_secrets`, que las reglas cierran al navegador. El script configura el borrado automático de imágenes antiguas de la función para no acumular almacenamiento.
 
 `deploy` pregunta antes de tocar recursos existentes:
 
 - Si ya publicas otra web en Firebase Hosting, crea un sitio aparte (`<proyecto>-oia`) en lugar de sobrescribirla.
-- Si Firestore ya lo usa otra app, no despliega reglas: fusiona a mano el bloque `match /oia_users/...` de `firestore.rules` dentro de tus reglas actuales (los datos de OIA viven solo en `oia_users`).
+- Si Firestore ya lo usa otra app, no despliega reglas: fusiona a mano el bloque `match /oia_users/...` de `firestore.rules` dentro de tus reglas actuales (los datos de OIA viven en `oia_users`; comprueba también que ninguna regla existente permita leer `oia_secrets`).
 
 Paso manual único: Firebase Console › Authentication › Sign-in method › activar **Google**. Si se creó un sitio aparte, añádelo en Authentication › Settings › Authorized domains.
 
@@ -26,7 +30,7 @@ Después, abre la web, inicia sesión y ve a **Conexiones** para pegar tus clave
 ## Alternativas de servidor
 
 - **Solo en tu ordenador**: `npm run setup`, añade `http://127.0.0.1:8787` a `ALLOWED_ORIGINS`, luego `npm run build && npm run serve` y abre `http://127.0.0.1:8787`. Las claves se guardan cifradas en `.data/credentials.json`.
-- **Firebase Cloud Functions**: requiere plan Blaze (tarjeta). El servidor es portable (`createApp` usa Request/Response estándar); haría falta un punto de entrada para Functions y un almacén de claves en Firestore. No se ha hecho para no activar facturación.
+- **Cloudflare Workers** (`npm run deploy:cloudflare`): sin tarjeta; la web llama a la URL `*.workers.dev` y las claves se guardan cifradas en Workers KV.
 
 ## Desarrollo
 
@@ -51,6 +55,7 @@ Los marcadores `[contradict]`, `[converge]`, `[fail:mock-a:quota]`, `[slow:mock-
 | «Clave no válida» al guardar | El proveedor la rechazó | Genera otra en el enlace «Obtener clave» |
 | Modelo no encontrado | El proveedor lo renombró | Ajustes › Modelos: escribe el nombre nuevo |
 | Todas las claves dejan de funcionar | Cambió `OIA_MASTER_KEY` | Restaura la clave anterior o vuelve a guardar las claves |
+| «Billing account not configured» al desplegar | Blaze no está activo | Actívalo en la consola o usa `npm run deploy:cloudflare` |
 | El historial no carga | Reglas de Firestore no desplegadas | `npx firebase deploy --only firestore:rules` |
 | «Origen no permitido» | `ALLOWED_ORIGINS` sin tu dominio | Vuelve a ejecutar `npm run deploy` |
 

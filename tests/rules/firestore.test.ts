@@ -69,5 +69,8 @@ describe('reglas de Firestore', () => {
   it('cualquier otra ruta está denegada', async () => {
     await assertFails(setDoc(doc(owner(), 'publico/x'), { a: 1 }));
     await assertFails(getDoc(doc(owner(), 'oia_users/u1')));
+    // Las claves cifradas del servidor (Cloud Functions) no son accesibles desde el cliente.
+    await assertFails(getDoc(doc(owner(), 'oia_secrets/cred:u1:gemini')));
+    await assertFails(setDoc(doc(owner(), 'oia_secrets/cred:u1:gemini'), { v: 'x' }));
   });
 });

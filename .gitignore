@@ -13,3 +13,8 @@ firestore.rules
 test-results/
 firestore-debug.log
 dist-e2e/
+functions/lib/
+functions/node_modules/
+functions/.env*
+functions/.secret.local
+firebase.cloudflare.json
