@@ -556,7 +556,13 @@ function SettingsView({ settings, participants, onSave }: { settings: Settings; 
     latest.current = fn(latest.current);
     setS(latest.current);
   };
-  useEffect(() => update(() => settings), [settings]);
+  // Solo se sincroniza cuando llegan ajustes nuevos; en el montaje no, para no pisar lo que ya se haya escrito.
+  const shown = useRef(settings);
+  useEffect(() => {
+    if (shown.current === settings) return;
+    shown.current = settings;
+    update(() => settings);
+  }, [settings]);
   const num = (k: 'maxRounds' | 'maxParticipants' | 'maxCalls', label: string, min: number, max: number, help: string) => (
     <label class="field">
       <span>{label}</span>
