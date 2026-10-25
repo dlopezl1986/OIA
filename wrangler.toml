@@ -1,0 +1,18 @@
+# Servidor de OIA en Cloudflare Workers (plan gratuito). «npm run deploy:api» rellena el id del KV.
+name = "oia-api"
+main = "server/entries/worker.ts"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+[vars]
+# Valores no secretos; se completan con «npm run setup».
+FIREBASE_PROJECT_ID = ""
+OWNER_EMAILS = ""
+ALLOWED_ORIGINS = ""
+
+[[kv_namespaces]]
+binding = "OIA_KV"
+id = "REPLACE_WITH_KV_ID"
+
+# Secretos (nunca en este archivo): wrangler secret put OIA_MASTER_KEY
+# Opcionales: OIA_KEY_GEMINI, OIA_KEY_GITHUB, ... y OIA_ALLOW_PAID

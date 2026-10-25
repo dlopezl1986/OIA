@@ -1,0 +1,15 @@
+node_modules/
+dist/
+dist-server/
+.data/
+.env
+.env.*
+!.env.example
+.dev.vars
+.wrangler/
+firestore.rules
+.firebaserc
+*.log
+test-results/
+firestore-debug.log
+dist-e2e/

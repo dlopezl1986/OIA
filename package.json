@@ -1,0 +1,50 @@
+{
+  "name": "oia",
+  "version": "0.1.0",
+  "description": "Orquestador personal multi-IA",
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "vite",
+    "dev:server": "vite build -c vite.server.config.ts && node --env-file-if-exists=.env dist-server/node.js",
+    "build": "vite build && vite build -c vite.server.config.ts",
+    "serve": "node --env-file-if-exists=.env dist-server/node.js",
+    "typecheck": "tsc -p .",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-oia \"vitest run -c vitest.rules.config.ts\"",
+    "test:e2e": "node tests/e2e/run.mjs",
+    "check": "npm run typecheck && npm run lint && npm test && npm run build",
+    "deploy": "node scripts/deploy.mjs",
+    "icons": "node scripts/icons.mjs"
+  },
+  "license": "UNLICENSED",
+  "dependencies": {
+    "dompurify": "^3.4.17",
+    "firebase": "^13.1.0",
+    "jose": "^6.2.13",
+    "marked": "^18.1.1",
+    "preact": "^11.0.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@firebase/rules-unit-testing": "^6.0.0",
+    "@types/node": "^26.6.5",
+    "eslint": "^10.13.0",
+    "firebase-tools": "^15.34.1",
+    "globals": "^17.13.0",
+    "playwright": "^1.63.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.0",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5",
+    "wrangler": "^4.152.0"
+  },
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "^1.14.6"
+  }
+}

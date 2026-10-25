@@ -1,0 +1,36 @@
+rules_version = '2';
+// Reglas de OIA. Generadas desde firestore.rules.template por «npm run setup» (no editar firestore.rules a mano).
+// Solo el propietario, con correo verificado, puede leer o escribir sus datos. Todo lo demás se deniega.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(uid) {
+      return request.auth != null
+        && request.auth.uid == uid
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in [__OWNER_EMAILS__];
+    }
+
+    function validQuery(d) {
+      return d.keys().hasOnly(['query', 'mode', 'final', 'strategy', 'agreement', 'confidence', 'discrepancies', 'warnings',
+                               'participants', 'usage', 'calls', 'ms', 'type', 'complexity', 'createdAt'])
+        && d.query is string && d.query.size() > 0 && d.query.size() <= 8000
+        && d.final is string && d.final.size() <= 200000
+        && d.mode in ['auto', 'fast', 'deep']
+        && d.createdAt == request.time;
+    }
+
+    match /oia_users/{uid}/queries/{id} {
+      allow read, delete: if isOwner(uid);
+      allow create: if isOwner(uid) && validQuery(request.resource.data);
+      allow update: if false;
+    }
+
+    match /oia_users/{uid}/meta/settings {
+      allow read: if isOwner(uid);
+      allow write: if isOwner(uid) && request.resource.data.size() <= 10;
+    }
+
+    // OIA no concede acceso a ninguna otra ruta. Si el proyecto ya tiene reglas propias,
+    // fusiona los bloques anteriores con ellas (ver docs/despliegue.md) en lugar de sustituirlas.
+  }
+}
