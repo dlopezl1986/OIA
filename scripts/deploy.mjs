@@ -1,6 +1,6 @@
 // Despliegue guiado de OIA.
-//   npm run deploy               → todo en Firebase: Hosting + Firestore + Cloud Functions (requiere plan Blaze)
-//   npm run deploy -- --cloudflare → interfaz en Firebase (Spark) y servidor en Cloudflare Workers (gratis, sin tarjeta)
+//   npm run deploy            → interfaz e historial en Firebase (plan gratuito Spark) y servidor en Cloudflare Workers (gratis, sin tarjeta)
+//   npm run deploy:functions  → todo en Firebase con Cloud Functions (requiere plan Blaze con tarjeta)
 // Nunca activa facturación. Pregunta antes de tocar una web o unas reglas de Firestore existentes.
 import { execFileSync, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 
-const cloudflare = process.argv.includes('--cloudflare');
+const cloudflare = !process.argv.includes('--functions');
 const interactive = !process.argv.includes('--yes');
 const rl = createInterface({ input: process.stdin, output: process.stdout });
 const yes = async (q, def = false) => {
@@ -74,7 +74,7 @@ if (cloudflare) {
 } else {
   console.log('\n4/5 Servidor en Cloud Functions (plan Blaze)…');
   if (!(await yes('Cloud Functions requiere que TÚ hayas activado el plan Blaze. ¿Está activo?', true))) {
-    fail('Activa Blaze en la consola de Firebase (Uso y facturación) o usa «npm run deploy -- --cloudflare».');
+    fail('Activa Blaze en la consola de Firebase (Uso y facturación) o usa «npm run deploy» (Cloudflare, gratis).');
   }
   // Variables no secretas de la función y clave maestra en Secret Manager (1 secreto: dentro de la cuota gratuita).
   writeFileSync(`functions/.env.${project}`, `OWNER_EMAILS=${env.OWNER_EMAILS}\nALLOWED_ORIGINS=${origins.join(',')}\n`);

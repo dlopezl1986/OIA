@@ -1,6 +1,6 @@
 {
   "name": "oia",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Orquestador personal multi-IA",
   "scripts": {
     "setup": "node scripts/setup.mjs",
@@ -15,7 +15,7 @@
     "test:e2e": "node tests/e2e/run.mjs",
     "check": "npm run typecheck && npm run lint && npm test && npm run build",
     "deploy": "node scripts/deploy.mjs",
-    "deploy:cloudflare": "node scripts/deploy.mjs --cloudflare",
+    "deploy:functions": "node scripts/deploy.mjs --functions",
     "icons": "node scripts/icons.mjs"
   },
   "license": "UNLICENSED",

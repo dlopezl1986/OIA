@@ -25,8 +25,8 @@ Claude, OpenAI directo y DeepSeek directo quedan desactivados mientras no marque
 ## Firebase
 
 - Hosting, Authentication (Google) y Firestore: incluidos en el plan gratuito Spark.
-- Cloud Functions (servidor elegido por Ruka): exige el plan Blaze con tarjeta. Tiene cuota gratuita mensual (2 millones de invocaciones en 2.ª gen.) que un uso personal no debería superar, pero la facturación queda activa. Mitigaciones: máximo 2 instancias, 256 MiB, 1 secreto, limpieza de imágenes y alerta de presupuesto recomendada.
-- Alternativa sin tarjeta: servidor en Cloudflare Workers (100.000 peticiones/día gratis).
+- Servidor (elección final de Ruka: plan gratuito): Cloudflare Workers, 100.000 peticiones/día gratis y sin tarjeta.
+- Alternativa: Cloud Functions, que exige el plan Blaze con tarjeta (cuota gratuita mensual, pero facturación activa). Preparada con `npm run deploy:functions` por si algún día se prefiere.
 
 ## Fuentes
 

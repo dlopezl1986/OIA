@@ -4,19 +4,20 @@
 
 - Node.js 22 o superior y Git.
 - Proyecto de Firebase con una app web registrada y Firestore creado (Firestore › Crear base de datos, modo producción).
-- Opción por defecto (todo en Firebase): plan **Blaze** activado por ti, porque Cloud Functions lo exige. Con uso personal debería quedar dentro de la cuota gratuita; pon una alerta de presupuesto (p. ej. 1 €) en Google Cloud › Facturación › Presupuestos.
-- Opción sin tarjeta: plan Spark + cuenta gratuita de Cloudflare para el servidor (`npm run deploy:cloudflare`).
+- Opción por defecto (0 €, sin tarjeta): Firebase en plan gratuito **Spark** (web, inicio de sesión e historial) + cuenta gratuita de **Cloudflare** para el servidor que guarda las claves y llama a las IA.
+- Opción alternativa (`npm run deploy:functions`): todo en Firebase con Cloud Functions; exige que actives el plan Blaze con tarjeta.
 
 ## Publicar (una vez)
 
 ```bash
 npm ci
 npm run setup    # pide ID del proyecto y tu correo; genera .env, clave maestra y reglas
-npm run deploy   # inicia sesión en Firebase (navegador), publica función, web y reglas
-# o bien: npm run deploy:cloudflare   (servidor en Cloudflare Workers, sin Blaze)
+npm run deploy   # inicia sesión en Firebase y Cloudflare (navegador), publica servidor, web y reglas
 ```
 
-Con Firebase, la función `api` corre en `europe-west1` con máximo 2 instancias y 256 MiB; la web llama a `/api` en su mismo dominio. La clave maestra va a Secret Manager (1 secreto, dentro de la cuota gratuita) y las claves cifradas de los proveedores a la colección `oia_secrets`, que las reglas cierran al navegador. El script configura el borrado automático de imágenes antiguas de la función para no acumular almacenamiento.
+Límites del plan gratuito de Cloudflare Workers, holgados para uso personal: 100.000 peticiones/día, 10 ms de CPU por petición (la espera a las IA no cuenta), 50 llamadas salientes por petición (OIA usa como máximo 16) y 1.000 escrituras/día en KV (solo se escribe al guardar claves). Los límites de frecuencia, la caché y las pausas por cuota se guardan en memoria de cada instancia, así que son aproximados.
+
+Con `npm run deploy:functions` (Blaze), la función `api` corre en `europe-west1` con máximo 2 instancias y 256 MiB; la web llama a `/api` en su mismo dominio. La clave maestra va a Secret Manager (1 secreto, dentro de la cuota gratuita) y las claves cifradas de los proveedores a la colección `oia_secrets`, que las reglas cierran al navegador. El script configura el borrado automático de imágenes antiguas de la función para no acumular almacenamiento.
 
 `deploy` pregunta antes de tocar recursos existentes:
 
@@ -30,7 +31,7 @@ Después, abre la web, inicia sesión y ve a **Conexiones** para pegar tus clave
 ## Alternativas de servidor
 
 - **Solo en tu ordenador**: `npm run setup`, añade `http://127.0.0.1:8787` a `ALLOWED_ORIGINS`, luego `npm run build && npm run serve` y abre `http://127.0.0.1:8787`. Las claves se guardan cifradas en `.data/credentials.json`.
-- **Cloudflare Workers** (`npm run deploy:cloudflare`): sin tarjeta; la web llama a la URL `*.workers.dev` y las claves se guardan cifradas en Workers KV.
+- **Firebase Cloud Functions** (`npm run deploy:functions`): todo en un único dominio, pero requiere Blaze.
 
 ## Desarrollo
 
@@ -55,7 +56,7 @@ Los marcadores `[contradict]`, `[converge]`, `[fail:mock-a:quota]`, `[slow:mock-
 | «Clave no válida» al guardar | El proveedor la rechazó | Genera otra en el enlace «Obtener clave» |
 | Modelo no encontrado | El proveedor lo renombró | Ajustes › Modelos: escribe el nombre nuevo |
 | Todas las claves dejan de funcionar | Cambió `OIA_MASTER_KEY` | Restaura la clave anterior o vuelve a guardar las claves |
-| «Billing account not configured» al desplegar | Blaze no está activo | Actívalo en la consola o usa `npm run deploy:cloudflare` |
+| «Billing account not configured» al desplegar | Blaze no está activo | Usa `npm run deploy` (Cloudflare) o activa Blaze |
 | El historial no carga | Reglas de Firestore no desplegadas | `npx firebase deploy --only firestore:rules` |
 | «Origen no permitido» | `ALLOWED_ORIGINS` sin tu dominio | Vuelve a ejecutar `npm run deploy` |
 
