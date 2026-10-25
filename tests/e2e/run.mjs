@@ -173,7 +173,8 @@ try {
     const persisted = await page
       .waitForFunction(() => document.querySelector('input[type=number]')?.value === '3', null, { timeout: 5000 })
       .then(() => true, () => false);
-    assert(persisted, 'no persiste');
+    const diag = await page.evaluate(() => ({ stored: localStorage.getItem('oia.dev.settings'), value: document.querySelector('input[type=number]')?.value }));
+    assert(persisted, `no persiste ${JSON.stringify(diag)}`);
   });
 
   await step('PWA: manifiesto válido e iconos', async () => {
