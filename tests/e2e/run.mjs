@@ -169,7 +169,11 @@ try {
     await page.getByText('Guardado').waitFor();
     await page.reload();
     await page.getByRole('button', { name: 'Ajustes' }).click();
-    assert((await page.getByLabel('Rondas de revisión máximas').inputValue()) === '3', 'no persiste');
+    // Los ajustes se cargan de forma asíncrona tras iniciar sesión: se espera al valor guardado.
+    const persisted = await page
+      .waitForFunction(() => document.querySelector('input[type=number]')?.value === '3', null, { timeout: 5000 })
+      .then(() => true, () => false);
+    assert(persisted, 'no persiste');
   });
 
   await step('PWA: manifiesto válido e iconos', async () => {
