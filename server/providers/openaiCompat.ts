@@ -6,6 +6,8 @@ interface Options {
   chatPath?: string;
   /** Ruta para listar modelos (gratuita). Sin ella solo se valida el formato. */
   modelsUrl?: string;
+  /** Modelo barato para validar con una llamada mínima (1 token) cuando no hay lista de modelos fiable. */
+  validateModel?: string;
   tokenParam?: 'max_tokens' | 'max_completion_tokens';
   headers?: Record<string, string>;
 }
@@ -50,6 +52,13 @@ export function openaiCompatible(opts: Options): ProviderAdapter {
       };
     },
     async validate(key: string, signal?: AbortSignal) {
+      if (opts.validateModel) {
+        await this.call(key, { model: opts.validateModel, messages: [{ role: 'user', content: 'ok' }], maxTokens: 1, signal }).catch((e) => {
+          // Una respuesta vacía o cortada también demuestra que la clave funciona.
+          if (!(e instanceof ProviderError && e.kind === 'incomplete')) throw e;
+        });
+        return { ok: true, detail: 'Clave válida (llamada de prueba correcta).', costly: false };
+      }
       if (!opts.modelsUrl) return { ok: true, detail: 'Formato aceptado; se comprobará en la primera consulta.', costly: false };
       const data = (await requestJson(opts.modelsUrl, { headers: headers(key), signal, secret: key })) as
         | { data?: unknown[] }

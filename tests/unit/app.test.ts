@@ -1,5 +1,5 @@
 import { exportJWK, generateKeyPair, SignJWT, createLocalJWKSet } from 'jose';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createApp, sanitizeSettings } from '../../server/app';
 import { createAdapters } from '../../server/providers/registry';
 import { mapHttpError } from '../../server/providers/http';
@@ -270,5 +270,27 @@ describe('control de costes y consultas', () => {
   it('sanea los ajustes recibidos', () => {
     const s = sanitizeSettings({ maxRounds: 99, maxParticipants: -1, maxCalls: 'x', disabled: ['gemini', 'evil'], models: { gemini: 'gemini-3.8-flash', gpt: 'bad model;rm' } });
     expect(s).toMatchObject({ maxRounds: 3, maxParticipants: 1, maxCalls: 8, disabled: ['gemini'], models: { gemini: 'gemini-3.8-flash' } });
+  });
+});
+
+describe('validación de GitHub Models', () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('valida con una llamada mínima y envía User-Agent', async () => {
+    const calls: { url: string; init: RequestInit }[] = [];
+    vi.stubGlobal('fetch', async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response(JSON.stringify({ choices: [{ message: { content: 'o' }, finish_reason: 'length' }] }), { status: 200 });
+    });
+    const r = await createAdapters().github.validate('github_pat_x');
+    expect(r.ok).toBe(true);
+    expect(calls[0]!.url).toBe('https://models.github.ai/inference/chat/completions');
+    expect(JSON.parse(calls[0]!.init.body as string).max_tokens).toBe(1);
+    expect(new Headers(calls[0]!.init.headers).get('user-agent')).toMatch(/^OIA/);
+  });
+
+  it('un token rechazado se marca como clave no válida', async () => {
+    vi.stubGlobal('fetch', async () => new Response('{"error":"Bad credentials"}', { status: 401 }));
+    await expect(createAdapters().github.validate('github_pat_x')).rejects.toMatchObject({ kind: 'auth' });
   });
 });

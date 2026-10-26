@@ -103,7 +103,8 @@ export function createAdapters(): Record<ConnectionId, ProviderAdapter> {
     perplexity: openaiCompatible({ baseUrl: 'https://api.perplexity.ai' }),
     github: openaiCompatible({
       baseUrl: 'https://models.github.ai/inference',
-      modelsUrl: 'https://models.github.ai/catalog/models',
+      // El catálogo ya no devuelve la lista de modelos; se valida con una llamada mínima (gratuita, cuenta 1 de la cuota diaria).
+      validateModel: 'openai/gpt-4.1-mini',
       headers: { Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
     }),
     mock: mock(),
