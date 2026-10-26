@@ -4,7 +4,7 @@
 Navegador (PWA, Preact)                          Servidor (Cloud Functions, Worker o Node)      Proveedores
 ┌────────────────────────┐   ID token Firebase  ┌──────────────────────────────────┐  HTTPS  ┌──────────────┐
 │ Consulta · Historial   │ ───────────────────▶ │ app.ts: auth, CORS, límites      │ ──────▶ │ Gemini       │
-│ Conexiones · Ajustes   │ ◀─────────────────── │ orchestrator/: clasifica, elige, │         │ GitHub Models│
+│ Conexiones · Ajustes   │ ◀─────────────────── │ orchestrator/: clasifica, elige, │         │ Groq, OpenRtr│
 └──────────┬─────────────┘   resultado JSON     │   consulta, árbitro, revisión    │         │ Perplexity…  │
            │ reglas: solo el propietario        │ providers/: un adaptador por API │         └──────────────┘
            ▼                                    │ store/: claves cifradas          │
@@ -16,7 +16,7 @@ Navegador (PWA, Preact)                          Servidor (Cloud Functions, Work
 | Ruta | Responsabilidad |
 |---|---|
 | `server/types.ts` | Interfaces comunes: adaptador, resultado, ajustes, errores normalizados |
-| `server/providers/` | Adaptadores: `openaiCompat` (OpenAI, DeepSeek, Perplexity, GitHub Models), `anthropic`, `gemini`, `mock` (simulado). `registry.ts` define conexiones y participantes |
+| `server/providers/` | Adaptadores: `openaiCompat` (OpenAI, DeepSeek, Perplexity, Groq, OpenRouter), `anthropic`, `gemini`, `mock` (simulado). `registry.ts` define conexiones y participantes |
 | `server/orchestrator/classify.ts` | Clasificación local por heurística (tipo, complejidad, necesidad de web). Sin coste de tokens |
 | `server/orchestrator/select.ts` | Selección por aptitud, coste (gratuitos primero) y diversidad de familia |
 | `server/orchestrator/run.ts` | Flujo completo: respuestas independientes, sustitución de caídos, árbitro, revisión, respaldo |

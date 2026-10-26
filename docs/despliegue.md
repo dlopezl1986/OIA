@@ -26,7 +26,7 @@ Con `npm run deploy:functions` (Blaze), la función `api` corre en `europe-west1
 
 Paso manual único: Firebase Console › Authentication › Sign-in method › activar **Google**. Si se creó un sitio aparte, añádelo en Authentication › Settings › Authorized domains.
 
-Después, abre la web, inicia sesión y ve a **Conexiones** para pegar tus claves (Gemini y GitHub Models son gratis).
+Después, abre la web, inicia sesión y ve a **Conexiones** para pegar tus claves (Gemini, Groq y OpenRouter son gratis).
 
 ## Alternativas de servidor
 

@@ -6,8 +6,12 @@ interface Options {
   chatPath?: string;
   /** Ruta para listar modelos (gratuita). Sin ella solo se valida el formato. */
   modelsUrl?: string;
-  /** Modelo barato para validar con una llamada mínima (1 token) cuando no hay lista de modelos fiable. */
-  validateModel?: string;
+  /** Ruta que exige la clave sin consumir cuota (cuando /models es público). */
+  authCheckUrl?: string;
+  /** Campos extra del cuerpo según el modelo. */
+  extraBody?: (model: string) => Record<string, unknown>;
+  /** Si se define, rechaza localmente los modelos no permitidos (p. ej. solo gratuitos). */
+  allowModel?: (model: string) => boolean;
   tokenParam?: 'max_tokens' | 'max_completion_tokens';
   headers?: Record<string, string>;
 }
@@ -28,10 +32,12 @@ export function openaiCompatible(opts: Options): ProviderAdapter {
   });
   return {
     async call(key: string, req: CallRequest): Promise<CallResult> {
+      if (opts.allowModel && !opts.allowModel(req.model)) throw new ProviderError('blocked', `Modelo no permitido en esta conexión: ${req.model}`);
       const body = {
         model: req.model,
         messages: req.messages,
         [opts.tokenParam ?? 'max_tokens']: req.maxTokens,
+        ...opts.extraBody?.(req.model),
       };
       const data = (await requestJson(opts.baseUrl + (opts.chatPath ?? '/chat/completions'), {
         method: 'POST',
@@ -52,12 +58,9 @@ export function openaiCompatible(opts: Options): ProviderAdapter {
       };
     },
     async validate(key: string, signal?: AbortSignal) {
-      if (opts.validateModel) {
-        await this.call(key, { model: opts.validateModel, messages: [{ role: 'user', content: 'ok' }], maxTokens: 1, signal }).catch((e) => {
-          // Una respuesta vacía o cortada también demuestra que la clave funciona.
-          if (!(e instanceof ProviderError && e.kind === 'incomplete')) throw e;
-        });
-        return { ok: true, detail: 'Clave válida (llamada de prueba correcta).', costly: false };
+      if (opts.authCheckUrl) {
+        await requestJson(opts.authCheckUrl, { headers: headers(key), signal, secret: key });
+        return { ok: true, detail: 'Clave válida.', costly: false };
       }
       if (!opts.modelsUrl) return { ok: true, detail: 'Formato aceptado; se comprobará en la primera consulta.', costly: false };
       const data = (await requestJson(opts.modelsUrl, { headers: headers(key), signal, secret: key })) as

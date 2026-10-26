@@ -52,13 +52,13 @@ describe('selección', () => {
     expect(chosen[0]!.def.id).toBe('mock-c');
   });
   it('prefiere gratuitos y diversidad de familia', () => {
-    const gh = PARTICIPANTS.filter((p) => ['gh-gpt', 'gpt', 'claude'].includes(p.id)).map<Available>((def) => ({
+    const gh = PARTICIPANTS.filter((p) => ['groq-gpt', 'gpt', 'claude'].includes(p.id)).map<Available>((def) => ({
       def,
       model: def.defaultModel,
-      cost: def.connection === 'github' ? 'free' : 'paid',
+      cost: def.connection === 'groq' ? 'free' : 'paid',
     }));
     const chosen = selectParticipants(gh, classify('Pregunta general cualquiera sin señales especiales que sea algo larga para no ser simple'), 2);
-    expect(chosen.map((c) => c.def.id)).toEqual(['gh-gpt', 'claude']);
+    expect(chosen.map((c) => c.def.id)).toEqual(['groq-gpt', 'claude']);
   });
 });
 

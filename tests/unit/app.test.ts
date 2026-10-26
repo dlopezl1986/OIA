@@ -273,24 +273,34 @@ describe('control de costes y consultas', () => {
   });
 });
 
-describe('validación de GitHub Models', () => {
+describe('proveedores gratuitos', () => {
   afterEach(() => vi.unstubAllGlobals());
+  const ok = () => new Response(JSON.stringify({ choices: [{ message: { content: 'París' }, finish_reason: 'stop' }], data: [] }), { status: 200 });
 
-  it('valida con una llamada mínima y envía User-Agent', async () => {
+  it('Groq: valida con /models, envía User-Agent y esfuerzo bajo en gpt-oss', async () => {
     const calls: { url: string; init: RequestInit }[] = [];
-    vi.stubGlobal('fetch', async (url: string, init: RequestInit) => {
-      calls.push({ url, init });
-      return new Response(JSON.stringify({ choices: [{ message: { content: 'o' }, finish_reason: 'length' }] }), { status: 200 });
-    });
-    const r = await createAdapters().github.validate('github_pat_x');
-    expect(r.ok).toBe(true);
-    expect(calls[0]!.url).toBe('https://models.github.ai/inference/chat/completions');
-    expect(JSON.parse(calls[0]!.init.body as string).max_tokens).toBe(1);
+    vi.stubGlobal('fetch', async (url: string, init: RequestInit) => (calls.push({ url, init }), ok()));
+    const a = createAdapters().groq;
+    expect((await a.validate('gsk_x')).ok).toBe(true);
+    expect(calls[0]!.url).toBe('https://api.groq.com/openai/v1/models');
     expect(new Headers(calls[0]!.init.headers).get('user-agent')).toMatch(/^OIA/);
+    await a.call('gsk_x', { model: 'openai/gpt-oss-120b', messages: [{ role: 'user', content: 'hola' }], maxTokens: 10 });
+    expect(JSON.parse(calls[1]!.init.body as string).reasoning_effort).toBe('low');
   });
 
-  it('un token rechazado se marca como clave no válida', async () => {
-    vi.stubGlobal('fetch', async () => new Response('{"error":"Bad credentials"}', { status: 401 }));
-    await expect(createAdapters().github.validate('github_pat_x')).rejects.toMatchObject({ kind: 'auth' });
+  it('OpenRouter: valida con /key y solo permite modelos gratuitos', async () => {
+    const calls: string[] = [];
+    vi.stubGlobal('fetch', async (url: string) => (calls.push(url), ok()));
+    const a = createAdapters().openrouter;
+    expect((await a.validate('sk-or-x')).ok).toBe(true);
+    expect(calls[0]).toBe('https://openrouter.ai/api/v1/key');
+    await expect(a.call('sk-or-x', { model: 'openai/gpt-5', messages: [], maxTokens: 10 })).rejects.toMatchObject({ kind: 'blocked' });
+    expect(calls).toHaveLength(1);
+    expect((await a.call('sk-or-x', { model: 'deepseek/deepseek-chat-v3.1:free', messages: [], maxTokens: 10 })).text).toBe('París');
+  });
+
+  it('una clave rechazada se marca como no válida', async () => {
+    vi.stubGlobal('fetch', async () => new Response('{"error":"Invalid API Key"}', { status: 401 }));
+    await expect(createAdapters().groq.validate('gsk_x')).rejects.toMatchObject({ kind: 'auth' });
   });
 });

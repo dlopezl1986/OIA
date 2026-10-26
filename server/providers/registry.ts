@@ -4,7 +4,7 @@ import { gemini } from './gemini';
 import { mock } from './mock';
 import { openaiCompatible } from './openaiCompat';
 
-// Datos verificados en documentación oficial el 2026-10-25 (ver docs/viabilidad.md).
+// Datos revisados el 2026-10-26 (ver docs/viabilidad.md). GitHub Models se retiró el 2026-07-30.
 export const CONNECTIONS: Record<ConnectionId, ConnectionDef> = {
   gemini: {
     id: 'gemini',
@@ -15,14 +15,23 @@ export const CONNECTIONS: Record<ConnectionId, ConnectionDef> = {
     keyPattern: /^AIza[\w-]{20,}$/,
     note: 'Cuota gratuita limitada por día. En el nivel gratuito Google puede usar los datos para mejorar sus productos.',
   },
-  github: {
-    id: 'github',
-    label: 'GitHub Models (OpenAI y DeepSeek)',
+  groq: {
+    id: 'groq',
+    label: 'Groq (GPT-OSS de OpenAI)',
     cost: 'free',
-    keyUrl: 'https://github.com/settings/personal-access-tokens/new',
-    keyHelp: 'Crea un token «fine-grained» sin acceso a repositorios y con el permiso «Models: Read-only». Gratuito con límites diarios.',
-    keyPattern: /^(github_pat_|ghp_)\w{20,}$/,
-    note: 'Alternativa gratuita oficial para modelos de OpenAI y DeepSeek (aprox. 150 peticiones/día en modelos básicos, 8 en DeepSeek-R1).',
+    keyUrl: 'https://console.groq.com/keys',
+    keyHelp: 'Entra en la consola de Groq (cuenta gratuita, sin tarjeta), pulsa «Create API Key» y pégala aquí.',
+    keyPattern: /^gsk_\w{20,}$/,
+    note: 'Cuota gratuita aprox. 1.000 consultas/día. Sirve gpt-oss, el modelo abierto de OpenAI (no es ChatGPT).',
+  },
+  openrouter: {
+    id: 'openrouter',
+    label: 'OpenRouter (modelos gratuitos)',
+    cost: 'free',
+    keyUrl: 'https://openrouter.ai/settings/keys',
+    keyHelp: 'Crea una cuenta gratuita en OpenRouter, genera una clave y pégala aquí. OIA solo usa modelos terminados en «:free».',
+    keyPattern: /^sk-or-[\w-]{20,}$/,
+    note: 'Aprox. 50 consultas/día en modelos gratuitos. Ahora mismo no incluye DeepSeek ni OpenAI gratis. La lista de modelos gratuitos cambia; si uno desaparece, cámbialo en Ajustes › Modelos.',
   },
   perplexity: {
     id: 'perplexity',
@@ -79,8 +88,9 @@ const s = (simple: number, general: number, code: number, research: number, reas
 
 export const PARTICIPANTS: ParticipantDef[] = [
   { id: 'gemini', label: 'Gemini', family: 'google', connection: 'gemini', defaultModel: 'gemini-3.8-flash', webSearch: false, strengths: s(3, 2, 2, 1, 2) },
-  { id: 'gh-gpt', label: 'GPT (GitHub)', family: 'openai', connection: 'github', defaultModel: 'openai/gpt-4.1-mini', webSearch: false, strengths: s(3, 2, 2, 1, 2) },
-  { id: 'gh-deepseek', label: 'DeepSeek (GitHub)', family: 'deepseek', connection: 'github', defaultModel: 'deepseek/deepseek-v3-0324', webSearch: false, strengths: s(2, 2, 3, 1, 2) },
+  { id: 'groq-gpt', label: 'GPT-OSS (Groq)', family: 'openai', connection: 'groq', defaultModel: 'openai/gpt-oss-120b', webSearch: false, strengths: s(3, 2, 3, 1, 3) },
+  // A 2026-10-26 OpenRouter no ofrece DeepSeek ni OpenAI gratis; se usa el mayor modelo gratuito disponible como tercera familia.
+  { id: 'or-free', label: 'Nemotron (OpenRouter)', family: 'nvidia', connection: 'openrouter', defaultModel: 'nvidia/nemotron-3-ultra-550b-a55b:free', webSearch: false, strengths: s(2, 2, 2, 1, 3) },
   { id: 'sonar', label: 'Perplexity Sonar', family: 'perplexity', connection: 'perplexity', defaultModel: 'sonar', webSearch: true, strengths: s(1, 2, 1, 3, 1) },
   { id: 'deepseek', label: 'DeepSeek', family: 'deepseek', connection: 'deepseek', defaultModel: 'deepseek-flash', webSearch: false, strengths: s(2, 2, 3, 1, 3) },
   { id: 'gpt', label: 'GPT (OpenAI)', family: 'openai', connection: 'openai', defaultModel: 'gpt-5-mini', webSearch: false, strengths: s(2, 3, 3, 1, 3) },
@@ -101,11 +111,19 @@ export function createAdapters(): Record<ConnectionId, ProviderAdapter> {
     }),
     deepseek: openaiCompatible({ baseUrl: 'https://api.deepseek.com', modelsUrl: 'https://api.deepseek.com/models' }),
     perplexity: openaiCompatible({ baseUrl: 'https://api.perplexity.ai' }),
-    github: openaiCompatible({
-      baseUrl: 'https://models.github.ai/inference',
-      // El catálogo ya no devuelve la lista de modelos; se valida con una llamada mínima (gratuita, cuenta 1 de la cuota diaria).
-      validateModel: 'openai/gpt-4.1-mini',
-      headers: { Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
+    groq: openaiCompatible({
+      baseUrl: 'https://api.groq.com/openai/v1',
+      modelsUrl: 'https://api.groq.com/openai/v1/models',
+      // gpt-oss razona antes de responder: con esfuerzo bajo gasta menos cuota y deja tokens para la respuesta.
+      extraBody: (model) => (model.includes('gpt-oss') ? { reasoning_effort: 'low' } : {}),
+    }),
+    openrouter: openaiCompatible({
+      baseUrl: 'https://openrouter.ai/api/v1',
+      // /models es público; /key exige la clave y no consume cuota.
+      authCheckUrl: 'https://openrouter.ai/api/v1/key',
+      headers: { 'HTTP-Referer': 'https://oia-dlopez.web.app', 'X-Title': 'OIA' },
+      // Garantía de coste 0: solo se aceptan modelos gratuitos.
+      allowModel: (model) => model.endsWith(':free'),
     }),
     mock: mock(),
   };

@@ -118,7 +118,7 @@ export async function orchestrate(query: string, mode: Mode, settings: Settings,
       } catch (e) {
         const err = e instanceof ProviderError ? e : isAbort(e) ? new ProviderError('timeout', 'Tiempo de espera agotado') : new ProviderError('server', `Error inesperado del proveedor (${e instanceof Error ? `${e.name}: ${e.message}` : 'desconocido'})`);
         // Visible en los registros del servidor (wrangler tail); los mensajes HTTP ya vienen sin la clave.
-        console.warn(`[${a.def.id}] ${err.kind}: ${err.message.split(key).join('***').slice(0, 300)}`);
+        console.log(`[${a.def.id}] ${err.kind}: ${err.message.split(key).join('***').slice(0, 300)}`);
         if (err.kind === 'auth' || err.kind === 'quota') {
           blockedConn.add(conn);
           deps.onConnectionFailure?.(conn, err.kind);

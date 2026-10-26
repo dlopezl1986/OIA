@@ -1,6 +1,6 @@
 // Tipos compartidos del núcleo. Sin dependencias de plataforma.
 
-export type ConnectionId = 'gemini' | 'github' | 'perplexity' | 'deepseek' | 'openai' | 'anthropic' | 'mock';
+export type ConnectionId = 'gemini' | 'groq' | 'openrouter' | 'perplexity' | 'deepseek' | 'openai' | 'anthropic' | 'mock';
 
 /** free: cuota gratuita oficial · credit: crédito incluido en un plan · paid: facturación por uso */
 export type CostClass = 'free' | 'credit' | 'paid';

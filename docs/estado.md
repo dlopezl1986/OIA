@@ -26,3 +26,9 @@ Añadido punto de entrada para Cloud Functions (reescritura `/api` en Hosting, c
 ## 2026-10-25 · v0.2.1
 
 Ruka decide quedarse en Firebase Spark. `npm run deploy` vuelve a publicar el servidor en Cloudflare Workers; `npm run deploy:functions` conserva la opción Blaze. CI en verde; corregido un fallo de Ajustes que perdía el último valor escrito.
+
+## 2026-10-26 · v0.3.0
+
+Publicado: web https://oia-dlopez.web.app (Firebase oia-dlopez, Spark) y API https://oia-api.dlopez-oia.workers.dev (Cloudflare, gratis). Verificado: health 200, sin sesión 401, CORS correcto.
+
+Primera prueba real: GitHub Models responde «OK» a todo porque se retiró el 2026-07-30. Se sustituye por Groq (`openai/gpt-oss-120b`) y OpenRouter (solo modelos `:free`, bloqueo en el adaptador). DeepSeek se queda sin vía gratuita. Se añade User-Agent a todas las peticiones y el servidor registra el motivo de cada fallo (`wrangler tail`).

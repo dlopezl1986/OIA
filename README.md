@@ -2,7 +2,7 @@
 
 Aplicación web privada e instalable (PWA) que envía tus consultas a una o varias IA, contrasta sus respuestas con una IA árbitro y te entrega una respuesta consolidada, con historial.
 
-- **Coste 0 € por defecto**: usa Gemini (AI Studio) y GitHub Models (GPT y DeepSeek) gratis; Perplexity con el crédito de Pro. Claude, OpenAI y DeepSeek directos solo si los autorizas.
+- **Coste 0 € por defecto**: usa Gemini (AI Studio), Groq (gpt-oss de OpenAI) y modelos gratuitos de OpenRouter; Perplexity con el crédito de Pro. Claude, OpenAI y DeepSeek directos solo si los autorizas.
 - **Adaptativo**: una IA para preguntas sencillas, varias con árbitro para las complejas, revisión cruzada (hasta 3 rondas) solo si hay contradicciones.
 - **Privado**: solo tu cuenta de Google entra; las claves se cifran en el servidor y nunca vuelven al navegador.
 

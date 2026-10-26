@@ -28,7 +28,7 @@ export async function requestJson(
   try {
     // Algunos proveedores (GitHub) rechazan peticiones sin User-Agent, y los Workers no envían uno por defecto.
     const headers = new Headers(init.headers);
-    if (!headers.has('user-agent')) headers.set('User-Agent', 'OIA/0.2');
+    if (!headers.has('user-agent')) headers.set('User-Agent', 'OIA/0.3');
     res = await fetch(url, { ...init, headers });
   } catch (e) {
     if (isAbort(e)) throw new ProviderError('timeout', 'Tiempo de espera agotado');

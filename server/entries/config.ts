@@ -3,7 +3,8 @@ import type { ConnectionId } from '../types';
 
 const KEY_VARS: Record<Exclude<ConnectionId, 'mock'>, string> = {
   gemini: 'OIA_KEY_GEMINI',
-  github: 'OIA_KEY_GITHUB',
+  groq: 'OIA_KEY_GROQ',
+  openrouter: 'OIA_KEY_OPENROUTER',
   perplexity: 'OIA_KEY_PERPLEXITY',
   deepseek: 'OIA_KEY_DEEPSEEK',
   openai: 'OIA_KEY_OPENAI',

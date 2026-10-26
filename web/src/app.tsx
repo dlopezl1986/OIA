@@ -413,7 +413,7 @@ function Connections({ api, data, onChange }: { api: Api; data: { connections: C
     <section aria-labelledby="c-title">
       <h2 id="c-title">Conexiones</h2>
       <p class="muted">
-        Las suscripciones (Claude Pro, ChatGPT Plus, Gemini) no incluyen acceso por API. Para coste 0 € empieza por <strong>Gemini</strong> y <strong>GitHub Models</strong>. Solo
+        Las suscripciones (Claude Pro, ChatGPT Plus, Gemini) no incluyen acceso por API. Para coste 0 € empieza por <strong>Gemini</strong> y <strong>Groq</strong> (y <strong>OpenRouter</strong> como tercera opinión). Solo
         necesitas configurar los proveedores que vayas a usar. Las claves se cifran en el servidor y nunca se vuelven a mostrar.
       </p>
       {free.map((c) => (
