@@ -119,8 +119,10 @@ export function createApp(env: AppEnv) {
       return { status: 'ok' as const, detail: r.detail };
     } catch (e) {
       const err = e instanceof ProviderError ? e : new ProviderError('network', 'No se pudo contactar con el proveedor');
-      if (err.kind === 'auth') return { status: 'invalid' as const, detail: 'El proveedor rechazó la clave (no válida o sin permisos).' };
-      return { status: 'unverified' as const, detail: `No se pudo verificar ahora (${err.kind}). Se volverá a comprobar al usarla.` };
+      // El mensaje ya viene sin la clave (mapHttpError la oculta); se muestra para poder diagnosticar.
+      const why = err.message.slice(0, 160);
+      if (err.kind === 'auth') return { status: 'invalid' as const, detail: `El proveedor rechazó la clave (no válida o sin permisos). ${why}` };
+      return { status: 'unverified' as const, detail: `No se pudo verificar ahora (${err.kind}): ${why}. Se volverá a comprobar al usarla.` };
     } finally {
       clearTimeout(t);
     }
