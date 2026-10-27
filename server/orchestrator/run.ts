@@ -111,6 +111,7 @@ export async function orchestrate(query: string, mode: Mode, settings: Settings,
       calls++;
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), settings.timeoutMs);
+      const started = Date.now();
       try {
         const r = await deps.adapters[conn].call(key, { model: a.model, messages, maxTokens, json, signal: ctrl.signal });
         addUsage(conn, r.usage);
@@ -118,7 +119,7 @@ export async function orchestrate(query: string, mode: Mode, settings: Settings,
       } catch (e) {
         const err = e instanceof ProviderError ? e : isAbort(e) ? new ProviderError('timeout', 'Tiempo de espera agotado') : new ProviderError('server', `Error inesperado del proveedor (${e instanceof Error ? `${e.name}: ${e.message}` : 'desconocido'})`);
         // Visible en los registros del servidor (wrangler tail); los mensajes HTTP ya vienen sin la clave.
-        console.log(`[${a.def.id}] ${err.kind}: ${err.message.split(key).join('***').slice(0, 300)}`);
+        console.log(`[${a.def.id}] ${err.kind} tras ${Date.now() - started} ms (límite ${settings.timeoutMs} ms): ${err.message.split(key).join('***').slice(0, 300)}`);
         if (err.kind === 'auth' || err.kind === 'quota') {
           blockedConn.add(conn);
           deps.onConnectionFailure?.(conn, err.kind);

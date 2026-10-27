@@ -23,6 +23,8 @@ export function gemini(): ProviderAdapter {
           // Los modelos con razonamiento interno consumen tokens de salida: se deja margen.
           generationConfig: {
             maxOutputTokens: req.maxTokens * 2 + 1024,
+            // Gemini 3.x razona por defecto en nivel medio (lento y gasta cuota); en bajo responde en segundos.
+            ...(/^gemini-3/.test(req.model) ? { thinkingConfig: { thinkingLevel: 'low' } } : {}),
             ...(req.json ? { responseMimeType: 'application/json' } : {}),
           },
         }),
